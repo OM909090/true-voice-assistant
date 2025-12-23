@@ -2,75 +2,68 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
 
 @layer base {
   :root {
-    /* TRUE AI Dark Theme - Navy/Slate with Teal Accents */
-    --background: 222 47% 11%;
+    /* TRUE AI - Dark Premium Mobile Theme */
+    --background: 225 25% 8%;
     --foreground: 210 40% 98%;
 
-    --card: 217 33% 15%;
+    --card: 225 25% 12%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 217 33% 15%;
+    --popover: 225 25% 12%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 172 66% 50%;
-    --primary-foreground: 222 47% 11%;
+    --primary: 168 84% 45%;
+    --primary-foreground: 225 25% 8%;
 
-    --secondary: 217 33% 20%;
+    --secondary: 225 20% 16%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 217 33% 17%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 225 20% 20%;
+    --muted-foreground: 215 20% 55%;
 
-    --accent: 172 66% 50%;
-    --accent-foreground: 222 47% 11%;
+    --accent: 168 84% 45%;
+    --accent-foreground: 225 25% 8%;
 
-    --destructive: 0 84% 60%;
+    --destructive: 0 72% 51%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 71% 45%;
+    --success: 152 69% 45%;
     --success-foreground: 210 40% 98%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
+    --warning-foreground: 225 25% 8%;
 
     --info: 199 89% 48%;
     --info-foreground: 210 40% 98%;
 
-    --border: 217 33% 22%;
-    --input: 217 33% 20%;
-    --ring: 172 66% 50%;
+    --spam: 0 84% 60%;
+    --spam-foreground: 210 40% 98%;
 
-    --radius: 0.75rem;
+    --border: 225 20% 18%;
+    --input: 225 20% 16%;
+    --ring: 168 84% 45%;
 
-    /* Custom colors for status badges */
-    --badge-active: 142 71% 45%;
-    --badge-beta: 262 83% 58%;
-    --badge-ready: 142 71% 45%;
-    --badge-progress: 199 89% 48%;
-    --badge-planned: 217 33% 40%;
-
-    /* Sidebar specific */
-    --sidebar-background: 222 47% 9%;
-    --sidebar-foreground: 215 20% 65%;
-    --sidebar-primary: 172 66% 50%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 217 33% 17%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 217 33% 18%;
-    --sidebar-ring: 172 66% 50%;
+    --radius: 1rem;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(172 66% 50%) 0%, hsl(199 89% 48%) 100%);
-    --gradient-card: linear-gradient(180deg, hsl(217 33% 17%) 0%, hsl(217 33% 13%) 100%);
-    --gradient-hero: linear-gradient(135deg, hsl(222 47% 11%) 0%, hsl(217 33% 15%) 50%, hsl(222 47% 11%) 100%);
-  }
+    --gradient-primary: linear-gradient(135deg, hsl(168 84% 45%) 0%, hsl(199 89% 48%) 100%);
+    --gradient-voice: linear-gradient(135deg, hsl(168 84% 45%) 0%, hsl(152 69% 45%) 50%, hsl(199 89% 48%) 100%);
+    --gradient-card: linear-gradient(180deg, hsl(225 25% 14%) 0%, hsl(225 25% 10%) 100%);
+    --gradient-glow: radial-gradient(circle at center, hsl(168 84% 45% / 0.3) 0%, transparent 70%);
 
-  .dark {
-    /* Already dark by default */
+    /* Sidebar - keeping for compatibility */
+    --sidebar-background: 225 25% 10%;
+    --sidebar-foreground: 215 20% 55%;
+    --sidebar-primary: 168 84% 45%;
+    --sidebar-primary-foreground: 225 25% 8%;
+    --sidebar-accent: 225 20% 16%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 225 20% 18%;
+    --sidebar-ring: 168 84% 45%;
   }
 }
 
@@ -90,43 +83,63 @@
 
   /* Custom scrollbar */
   ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 4px;
+    height: 4px;
   }
 
   ::-webkit-scrollbar-track {
-    @apply bg-background;
+    @apply bg-transparent;
   }
 
   ::-webkit-scrollbar-thumb {
     @apply bg-muted rounded-full;
   }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-muted-foreground/50;
-  }
 }
 
 @layer components {
-  /* Code block styling */
-  .code-block {
-    @apply bg-background/50 rounded-lg p-4 font-mono text-sm overflow-x-auto;
-    border: 1px solid hsl(var(--border));
-  }
-
-  /* Glow effects */
-  .glow-primary {
-    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
-  }
-
-  .glow-subtle {
-    box-shadow: 0 0 40px hsl(var(--primary) / 0.1);
+  /* Mobile container */
+  .mobile-container {
+    @apply max-w-md mx-auto min-h-screen relative;
   }
 
   /* Glass effect */
   .glass {
-    @apply backdrop-blur-xl bg-card/80;
+    @apply backdrop-blur-xl;
+    background: hsl(var(--card) / 0.8);
     border: 1px solid hsl(var(--border) / 0.5);
+  }
+
+  /* Glow effects */
+  .glow-primary {
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.4), 0 0 60px hsl(var(--primary) / 0.2);
+  }
+
+  .glow-sm {
+    box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
+  }
+
+  /* Voice button pulse */
+  .voice-pulse {
+    animation: voice-pulse 2s ease-in-out infinite;
+  }
+
+  @keyframes voice-pulse {
+    0%, 100% {
+      box-shadow: 0 0 0 0 hsl(var(--primary) / 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 20px hsl(var(--primary) / 0);
+    }
+  }
+
+  /* Listening animation */
+  .listening-wave {
+    animation: wave 1s ease-in-out infinite;
+  }
+
+  @keyframes wave {
+    0%, 100% { transform: scaleY(0.5); }
+    50% { transform: scaleY(1); }
   }
 
   /* Gradient text */
@@ -137,43 +150,25 @@
     background-clip: text;
   }
 
-  /* Status dot animation */
-  .status-dot {
-    @apply relative;
+  /* Safe area for mobile */
+  .safe-bottom {
+    padding-bottom: max(env(safe-area-inset-bottom), 1rem);
   }
 
-  .status-dot::before {
-    content: '';
-    @apply absolute inset-0 rounded-full animate-ping opacity-50;
-    background: inherit;
-  }
-
-  /* Sidebar nav hover effect */
-  .nav-item {
-    @apply relative transition-all duration-200;
-  }
-
-  .nav-item::before {
-    content: '';
-    @apply absolute left-0 top-1/2 -translate-y-1/2 w-0.5 h-0 bg-primary rounded-full transition-all duration-200;
-  }
-
-  .nav-item:hover::before,
-  .nav-item.active::before {
-    @apply h-6;
+  .safe-top {
+    padding-top: max(env(safe-area-inset-top), 1rem);
   }
 }
 
 @layer utilities {
-  /* Animation utilities */
   .animate-in {
-    animation: animate-in 0.3s ease-out;
+    animation: animate-in 0.4s ease-out forwards;
   }
 
   @keyframes animate-in {
     from {
       opacity: 0;
-      transform: translateY(8px);
+      transform: translateY(10px);
     }
     to {
       opacity: 1;
@@ -181,25 +176,39 @@
     }
   }
 
-  .animate-slide-in {
-    animation: slide-in 0.4s ease-out;
+  .animate-scale-in {
+    animation: scale-in 0.3s ease-out forwards;
   }
 
-  @keyframes slide-in {
+  @keyframes scale-in {
     from {
       opacity: 0;
-      transform: translateX(-20px);
+      transform: scale(0.9);
     }
     to {
       opacity: 1;
-      transform: translateX(0);
+      transform: scale(1);
     }
   }
 
-  /* Stagger delay utilities */
-  .delay-100 { animation-delay: 100ms; }
-  .delay-200 { animation-delay: 200ms; }
+  .animate-slide-up {
+    animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  }
+
+  @keyframes slide-up {
+    from {
+      opacity: 0;
+      transform: translateY(100%);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Stagger delays */
+  .delay-75 { animation-delay: 75ms; }
+  .delay-150 { animation-delay: 150ms; }
+  .delay-225 { animation-delay: 225ms; }
   .delay-300 { animation-delay: 300ms; }
-  .delay-400 { animation-delay: 400ms; }
-  .delay-500 { animation-delay: 500ms; }
 }

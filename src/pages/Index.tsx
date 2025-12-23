@@ -1,98 +1,55 @@
 import { useState } from "react";
-import { Sidebar } from "@/components/layout/Sidebar";
-import { Header } from "@/components/layout/Header";
-import { ArchitectureSection } from "@/components/sections/ArchitectureSection";
-import { ComponentsSection } from "@/components/sections/ComponentsSection";
-import { DatabaseSection } from "@/components/sections/DatabaseSection";
-import { VoiceAgentSection } from "@/components/sections/VoiceAgentSection";
-import { ToolsSection } from "@/components/sections/ToolsSection";
-import { ModelsSection } from "@/components/sections/ModelsSection";
-import { CallerIDSection } from "@/components/sections/CallerIDSection";
-import { CallAutomationSection } from "@/components/sections/CallAutomationSection";
-import { CallLogsSection } from "@/components/sections/CallLogsSection";
-import { APISection } from "@/components/sections/APISection";
-import { SecuritySection } from "@/components/sections/SecuritySection";
-import { RoadmapSection } from "@/components/sections/RoadmapSection";
+import { BottomNav } from "@/components/navigation/BottomNav";
+import { HomeScreen } from "@/components/screens/HomeScreen";
+import { CallsScreen } from "@/components/screens/CallsScreen";
+import { ContactsScreen } from "@/components/screens/ContactsScreen";
+import { SettingsScreen } from "@/components/screens/SettingsScreen";
+import { VoiceAssistant } from "@/components/voice/VoiceAssistant";
+import { CallEntry } from "@/components/calls/CallCard";
 
-const sections: Record<string, { title: string; subtitle: string; component: React.ComponentType }> = {
-  architecture: {
-    title: "TRUE AI - System Architecture",
-    subtitle: "Next-Generation AI-Powered Caller ID & Voice Agent Platform",
-    component: ArchitectureSection,
-  },
-  components: {
-    title: "TRUE AI - Core Components",
-    subtitle: "Key features and capabilities of the platform",
-    component: ComponentsSection,
-  },
-  database: {
-    title: "TRUE AI - Database Schema",
-    subtitle: "Data models and storage architecture",
-    component: DatabaseSection,
-  },
-  "voice-agent": {
-    title: "TRUE AI - Voice AI Agent",
-    subtitle: "Multi-language voice assistant with agentic capabilities",
-    component: VoiceAgentSection,
-  },
-  tools: {
-    title: "TRUE AI - Tool Definitions",
-    subtitle: "AI agent tool registry and function schemas",
-    component: ToolsSection,
-  },
-  models: {
-    title: "TRUE AI - Pluggable Models",
-    subtitle: "Configurable AI providers and model settings",
-    component: ModelsSection,
-  },
-  "caller-id": {
-    title: "TRUE AI - Caller ID System",
-    subtitle: "Real-time caller identification and spam detection",
-    component: CallerIDSection,
-  },
-  "call-automation": {
-    title: "TRUE AI - Call Automation",
-    subtitle: "Intelligent call handling and voice messaging",
-    component: CallAutomationSection,
-  },
-  "call-logs": {
-    title: "TRUE AI - Call Logs",
-    subtitle: "Voice-first call history and analytics",
-    component: CallLogsSection,
-  },
-  api: {
-    title: "TRUE AI - API Contracts",
-    subtitle: "REST API endpoints and request/response schemas",
-    component: APISection,
-  },
-  security: {
-    title: "TRUE AI - Security & Privacy",
-    subtitle: "Encryption, permissions, and data privacy model",
-    component: SecuritySection,
-  },
-  roadmap: {
-    title: "TRUE AI - Development Roadmap",
-    subtitle: "MVP to V2 implementation timeline",
-    component: RoadmapSection,
-  },
-};
+const sampleCalls: CallEntry[] = [
+  { id: "1", name: "Mom", number: "+91 98765 43210", time: "Just now", type: "incoming", duration: "5 min", isVerified: true },
+  { id: "2", name: "Unknown", number: "+91 87654 32109", time: "2 min ago", type: "missed", isSpam: true, spamScore: 0.89 },
+  { id: "3", name: "Ankit", number: "+91 76543 21098", time: "1 hour ago", type: "outgoing", duration: "2 min", isVerified: true },
+  { id: "4", name: "Office", number: "+91 11 2345 6789", time: "3 hours ago", type: "incoming", duration: "15 min" },
+  { id: "5", name: "Swiggy", number: "+91 80 4567 8901", time: "Yesterday", type: "incoming", duration: "1 min" },
+  { id: "6", name: "Unknown", number: "+91 99887 76655", time: "Yesterday", type: "missed" },
+  { id: "7", name: "Dad", number: "+91 98765 43211", time: "2 days ago", type: "outgoing", duration: "8 min", isVerified: true },
+  { id: "8", name: "Spam Caller", number: "+91 12345 67890", time: "2 days ago", type: "missed", isSpam: true, spamScore: 0.95 },
+];
 
 const Index = () => {
-  const [activeSection, setActiveSection] = useState("architecture");
-  const currentSection = sections[activeSection] || sections.architecture;
-  const SectionComponent = currentSection.component;
+  const [activeTab, setActiveTab] = useState("home");
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "voice") {
+      setShowVoiceAssistant(true);
+    } else {
+      setActiveTab(tab);
+    }
+  };
+
+  const handleCallClick = (call: CallEntry) => {
+    console.log("Call clicked:", call);
+  };
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar activeSection={activeSection} onSectionChange={setActiveSection} />
-      
-      <main className="ml-72">
-        <Header title={currentSection.title} subtitle={currentSection.subtitle} />
-        
-        <div className="p-8">
-          <SectionComponent />
-        </div>
-      </main>
+    <div className="mobile-container min-h-screen bg-background">
+      {activeTab === "home" && (
+        <HomeScreen recentCalls={sampleCalls} onCallClick={handleCallClick} />
+      )}
+      {activeTab === "calls" && (
+        <CallsScreen calls={sampleCalls} onCallClick={handleCallClick} />
+      )}
+      {activeTab === "contacts" && <ContactsScreen />}
+      {activeTab === "settings" && <SettingsScreen />}
+
+      <BottomNav activeTab={activeTab} onTabChange={handleTabChange} />
+
+      {showVoiceAssistant && (
+        <VoiceAssistant onClose={() => setShowVoiceAssistant(false)} />
+      )}
     </div>
   );
 };
