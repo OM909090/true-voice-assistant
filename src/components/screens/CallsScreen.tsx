@@ -1,6 +1,8 @@
-import { useState } from "react";
-import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Search, Filter, Mic } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Phone, PhoneIncoming, PhoneMissed, PhoneOutgoing, Search, Mic, Loader2 } from "lucide-react";
 import { CallCard, CallEntry } from "../calls/CallCard";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface CallsScreenProps {
   calls: CallEntry[];
@@ -9,9 +11,52 @@ interface CallsScreenProps {
 
 type FilterType = "all" | "missed" | "incoming" | "outgoing" | "spam";
 
-export function CallsScreen({ calls, onCallClick }: CallsScreenProps) {
+export function CallsScreen({ calls: propCalls, onCallClick }: CallsScreenProps) {
   const [filter, setFilter] = useState<FilterType>("all");
   const [searchQuery, setSearchQuery] = useState("");
+  const [calls, setCalls] = useState<CallEntry[]>(propCalls);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCallLogs();
+  }, []);
+
+  const fetchCallLogs = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('call_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50);
+      
+      if (error) throw error;
+      
+      // Transform database records to CallEntry format
+      const transformedCalls: CallEntry[] = (data || []).map((log) => ({
+        id: log.id,
+        name: log.caller_name || 'Unknown',
+        number: log.phone_number,
+        time: new Date(log.created_at).toLocaleTimeString('en-US', { 
+          hour: 'numeric', 
+          minute: '2-digit',
+          hour12: true 
+        }),
+        type: log.call_type as 'incoming' | 'outgoing' | 'missed',
+        duration: log.duration_seconds > 0 ? `${Math.floor(log.duration_seconds / 60)}m ${log.duration_seconds % 60}s` : undefined,
+        isSpam: log.is_spam,
+        isVerified: false,
+        aiHandled: log.ai_handled
+      }));
+      
+      // Merge with prop calls if no DB data
+      setCalls(transformedCalls.length > 0 ? transformedCalls : propCalls);
+    } catch (error) {
+      console.error('Error fetching call logs:', error);
+      setCalls(propCalls);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filters: { id: FilterType; label: string; icon?: React.ComponentType<{ className?: string }> }[] = [
     { id: "all", label: "All" },
@@ -92,20 +137,26 @@ export function CallsScreen({ calls, onCallClick }: CallsScreenProps) {
       </div>
 
       {/* Calls List */}
-      <div className="space-y-3">
-        {filteredCalls.map((call, index) => (
-          <div key={call.id} className="animate-in" style={{ animationDelay: `${index * 50}ms` }}>
-            <CallCard call={call} onClick={() => onCallClick(call)} />
-          </div>
-        ))}
-        
-        {filteredCalls.length === 0 && (
-          <div className="text-center py-12">
-            <Phone className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
-            <p className="text-muted-foreground">No calls found</p>
-          </div>
-        )}
-      </div>
+      {loading ? (
+        <div className="flex justify-center py-12">
+          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {filteredCalls.map((call, index) => (
+            <div key={call.id} className="animate-in" style={{ animationDelay: `${index * 50}ms` }}>
+              <CallCard call={call} onClick={() => onCallClick(call)} />
+            </div>
+          ))}
+          
+          {filteredCalls.length === 0 && (
+            <div className="text-center py-12">
+              <Phone className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+              <p className="text-muted-foreground">No calls found</p>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }

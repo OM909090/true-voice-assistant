@@ -1,6 +1,8 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Mic, MicOff, X, Volume2 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { sendToAIAgent, speak, startListening, detectLanguage } from "@/services/aiService";
+import { toast } from "sonner";
 
 interface VoiceAssistantProps {
   onClose: () => void;
@@ -8,43 +10,121 @@ interface VoiceAssistantProps {
 
 type AssistantState = "idle" | "listening" | "processing" | "speaking";
 
-const sampleResponses = [
-  { command: "Call Mom", response: "Calling Mom..." },
-  { command: "Read my call log", response: "Yesterday at 6:20 PM, Ankit called you for 2 minutes. At 5:45 PM, you missed a call from an unknown number." },
-  { command: "Save this number as Raj", response: "I've saved +91 98765 43210 as Raj in your contacts." },
-  { command: "Block this number", response: "Done. I've blocked this number. You won't receive calls from them anymore." },
-];
-
 export function VoiceAssistant({ onClose }: VoiceAssistantProps) {
   const [state, setState] = useState<AssistantState>("idle");
   const [transcript, setTranscript] = useState("");
   const [response, setResponse] = useState("");
+  const [stopListeningFn, setStopListeningFn] = useState<(() => void) | null>(null);
+  const [toolsUsed, setToolsUsed] = useState<string[]>([]);
 
-  const startListening = () => {
+  const processVoiceCommand = useCallback(async (text: string) => {
+    if (!text.trim()) {
+      setState("idle");
+      return;
+    }
+
+    setState("processing");
+    
+    try {
+      const language = detectLanguage(text);
+      const langCode = language.split('-')[0];
+      
+      console.log(`Processing: "${text}" in ${language}`);
+      
+      const result = await sendToAIAgent(text, 'assistant', langCode);
+      
+      setResponse(result.response);
+      
+      // Track tools used
+      if (result.tools_executed?.length > 0) {
+        const tools = result.tools_executed.map(t => t.tool);
+        setToolsUsed(tools);
+        toast.success(`Executed: ${tools.join(', ')}`);
+      }
+      
+      // Speak the response
+      setState("speaking");
+      await speak(result.response, language);
+      setState("idle");
+      
+    } catch (error) {
+      console.error('AI processing error:', error);
+      const errorMsg = "I'm sorry, I couldn't process that. Please try again.";
+      setResponse(errorMsg);
+      toast.error('Failed to process voice command');
+      setState("idle");
+    }
+  }, []);
+
+  const handleListeningEnd = useCallback(() => {
+    setState("idle");
+    if (transcript.trim()) {
+      processVoiceCommand(transcript);
+    }
+  }, [transcript, processVoiceCommand]);
+
+  const handleVoiceResult = useCallback((text: string) => {
+    setTranscript(text);
+  }, []);
+
+  const startListeningHandler = () => {
     setState("listening");
     setTranscript("");
     setResponse("");
+    setToolsUsed([]);
 
-    // Simulate voice recognition
+    // Try Web Speech API first
+    const stop = startListening(
+      handleVoiceResult,
+      () => {
+        // On end, process the command
+        setState((currentState) => {
+          if (currentState === "listening") {
+            return "idle";
+          }
+          return currentState;
+        });
+      },
+      'en-US'
+    );
+    
+    setStopListeningFn(() => stop);
+
+    // Auto-stop after 10 seconds
     setTimeout(() => {
-      const randomCommand = sampleResponses[Math.floor(Math.random() * sampleResponses.length)];
-      setTranscript(randomCommand.command);
-      setState("processing");
-
-      setTimeout(() => {
-        setResponse(randomCommand.response);
-        setState("speaking");
-
-        setTimeout(() => {
-          setState("idle");
-        }, 3000);
-      }, 1000);
-    }, 2000);
+      if (stopListeningFn) {
+        stopListeningFn();
+      }
+      setState((currentState) => {
+        if (currentState === "listening" && transcript.trim()) {
+          processVoiceCommand(transcript);
+        }
+        return currentState === "listening" ? "idle" : currentState;
+      });
+    }, 10000);
   };
 
-  const stopListening = () => {
-    setState("idle");
+  const stopListeningHandler = () => {
+    if (stopListeningFn) {
+      stopListeningFn();
+      setStopListeningFn(null);
+    }
+    
+    if (transcript.trim()) {
+      processVoiceCommand(transcript);
+    } else {
+      setState("idle");
+    }
   };
+
+  useEffect(() => {
+    return () => {
+      if (stopListeningFn) {
+        stopListeningFn();
+      }
+      window.speechSynthesis?.cancel();
+    };
+  }, [stopListeningFn]);
 
   return (
     <div className="fixed inset-0 z-50 bg-background flex flex-col animate-slide-up">
@@ -69,7 +149,7 @@ export function VoiceAssistant({ onClose }: VoiceAssistantProps) {
             <h2 className="font-semibold text-foreground">TRUE AI</h2>
             <p className="text-xs text-muted-foreground">
               {state === "listening" && "Listening..."}
-              {state === "processing" && "Processing..."}
+              {state === "processing" && "Processing with AI..."}
               {state === "speaking" && "Speaking..."}
               {state === "idle" && "Tap to speak"}
             </p>
@@ -101,6 +181,13 @@ export function VoiceAssistant({ onClose }: VoiceAssistantProps) {
           </div>
         )}
 
+        {/* Processing indicator */}
+        {state === "processing" && (
+          <div className="mb-8">
+            <div className="w-16 h-16 border-4 border-primary/30 border-t-primary rounded-full animate-spin" />
+          </div>
+        )}
+
         {/* Transcript */}
         {transcript && (
           <div className="text-center mb-8 animate-in">
@@ -113,6 +200,15 @@ export function VoiceAssistant({ onClose }: VoiceAssistantProps) {
         {response && (
           <div className="text-center max-w-sm animate-in">
             <p className="text-lg text-foreground leading-relaxed">{response}</p>
+            {toolsUsed.length > 0 && (
+              <div className="mt-4 flex flex-wrap justify-center gap-2">
+                {toolsUsed.map((tool, i) => (
+                  <span key={i} className="px-2 py-1 rounded-full bg-primary/20 text-primary text-xs">
+                    {tool}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
@@ -123,7 +219,8 @@ export function VoiceAssistant({ onClose }: VoiceAssistantProps) {
             <div className="space-y-2">
               <p className="text-sm text-foreground/80">"Call Mom and say I'll be late"</p>
               <p className="text-sm text-foreground/80">"Read my call log"</p>
-              <p className="text-sm text-foreground/80">"Who called me?"</p>
+              <p className="text-sm text-foreground/80">"Save this number as Raj"</p>
+              <p className="text-sm text-foreground/80">"Block this spam number"</p>
               <p className="text-sm text-foreground/80">"ମୋତେ ଶେଷ କଲ୍‌ଟା କହ" (Odia)</p>
             </div>
           </div>
@@ -133,7 +230,7 @@ export function VoiceAssistant({ onClose }: VoiceAssistantProps) {
       {/* Mic Button */}
       <div className="relative z-10 flex justify-center pb-16">
         <button
-          onClick={state === "listening" ? stopListening : startListening}
+          onClick={state === "listening" ? stopListeningHandler : startListeningHandler}
           disabled={state === "processing" || state === "speaking"}
           className={cn(
             "relative w-20 h-20 rounded-full flex items-center justify-center transition-all duration-300",
