@@ -1,35 +1,49 @@
-import { useState } from "react";
-import { Search, Plus, Users, ShieldCheck, Star, Mic } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Search, Plus, Users, ShieldCheck, Star, Mic, Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 interface Contact {
   id: string;
   name: string;
-  number: string;
-  isVerified?: boolean;
-  isFavorite?: boolean;
-  source: "manual" | "ai" | "community";
+  phone_number: string;
+  is_verified?: boolean;
+  is_favorite?: boolean;
+  source: string;
 }
-
-const sampleContacts: Contact[] = [
-  { id: "1", name: "Mom", number: "+91 98765 43210", isVerified: true, isFavorite: true, source: "manual" },
-  { id: "2", name: "Dad", number: "+91 98765 43211", isVerified: true, isFavorite: true, source: "manual" },
-  { id: "3", name: "Ankit", number: "+91 87654 32109", isVerified: true, source: "manual" },
-  { id: "4", name: "Office", number: "+91 11 2345 6789", source: "ai" },
-  { id: "5", name: "Swiggy Delivery", number: "+91 80 4567 8901", source: "community" },
-  { id: "6", name: "Amazon Delivery", number: "+91 80 1234 5678", source: "community" },
-  { id: "7", name: "Bank HDFC", number: "+91 22 6789 0123", isVerified: true, source: "community" },
-  { id: "8", name: "Dr. Sharma", number: "+91 99887 76655", source: "ai" },
-];
 
 export function ContactsScreen() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showFavorites, setShowFavorites] = useState(false);
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const filteredContacts = sampleContacts.filter((contact) => {
-    if (showFavorites && !contact.isFavorite) return false;
+  useEffect(() => {
+    fetchContacts();
+  }, []);
+
+  const fetchContacts = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*')
+        .order('name');
+      
+      if (error) throw error;
+      setContacts(data || []);
+    } catch (error) {
+      console.error('Error fetching contacts:', error);
+      toast.error('Failed to load contacts');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredContacts = contacts.filter((contact) => {
+    if (showFavorites && !contact.is_favorite) return false;
     if (!searchQuery) return true;
     return contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-           contact.number.includes(searchQuery);
+           contact.phone_number.includes(searchQuery);
   });
 
   const groupedContacts = filteredContacts.reduce((acc, contact) => {
@@ -38,6 +52,14 @@ export function ContactsScreen() {
     acc[letter].push(contact);
     return acc;
   }, {} as Record<string, Contact[]>);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="px-4 pb-24 safe-top">
@@ -82,7 +104,7 @@ export function ContactsScreen() {
           }`}
         >
           <Users className="w-4 h-4" />
-          All
+          All ({contacts.length})
         </button>
         <button
           onClick={() => setShowFavorites(true)}
@@ -98,44 +120,54 @@ export function ContactsScreen() {
       </div>
 
       {/* Contacts List */}
-      <div className="space-y-6">
-        {Object.entries(groupedContacts).sort().map(([letter, contacts]) => (
-          <div key={letter}>
-            <p className="text-sm font-medium text-primary mb-2 px-1">{letter}</p>
-            <div className="space-y-2">
-              {contacts.map((contact) => (
-                <button
-                  key={contact.id}
-                  className="w-full flex items-center gap-4 p-4 bg-card rounded-2xl border border-border hover:border-primary/30 transition-all active:scale-[0.98]"
-                >
-                  <div className="relative w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                    {contact.name.charAt(0).toUpperCase()}
-                    {contact.isVerified && (
-                      <ShieldCheck className="absolute -bottom-1 -right-1 w-4 h-4 text-success" />
-                    )}
-                  </div>
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center gap-2">
-                      <span className="font-medium text-foreground">{contact.name}</span>
-                      {contact.isFavorite && <Star className="w-3 h-3 text-warning fill-warning" />}
+      {Object.keys(groupedContacts).length === 0 ? (
+        <div className="text-center py-12">
+          <Users className="w-12 h-12 text-muted-foreground mx-auto mb-4 opacity-50" />
+          <p className="text-muted-foreground mb-2">No contacts yet</p>
+          <p className="text-sm text-muted-foreground">
+            Say "Save this number as Mom" to add a contact
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-6">
+          {Object.entries(groupedContacts).sort().map(([letter, letterContacts]) => (
+            <div key={letter}>
+              <p className="text-sm font-medium text-primary mb-2 px-1">{letter}</p>
+              <div className="space-y-2">
+                {letterContacts.map((contact) => (
+                  <button
+                    key={contact.id}
+                    className="w-full flex items-center gap-4 p-4 bg-card rounded-2xl border border-border hover:border-primary/30 transition-all active:scale-[0.98]"
+                  >
+                    <div className="relative w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
+                      {contact.name.charAt(0).toUpperCase()}
+                      {contact.is_verified && (
+                        <ShieldCheck className="absolute -bottom-1 -right-1 w-4 h-4 text-success" />
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{contact.number}</p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-xs px-2 py-1 rounded-full ${
-                      contact.source === "ai" ? "bg-primary/20 text-primary" :
-                      contact.source === "community" ? "bg-info/20 text-info" :
-                      "bg-secondary text-muted-foreground"
-                    }`}>
-                      {contact.source === "ai" ? "AI" : contact.source === "community" ? "Community" : "Manual"}
-                    </span>
-                  </div>
-                </button>
-              ))}
+                    <div className="flex-1 text-left">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium text-foreground">{contact.name}</span>
+                        {contact.is_favorite && <Star className="w-3 h-3 text-warning fill-warning" />}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{contact.phone_number}</p>
+                    </div>
+                    <div className="text-right">
+                      <span className={`text-xs px-2 py-1 rounded-full ${
+                        contact.source === "ai" ? "bg-primary/20 text-primary" :
+                        contact.source === "community" ? "bg-info/20 text-info" :
+                        "bg-secondary text-muted-foreground"
+                      }`}>
+                        {contact.source === "ai" ? "AI" : contact.source === "community" ? "Community" : "Manual"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
