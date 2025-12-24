@@ -14,7 +14,196 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      ai_interactions: {
+        Row: {
+          ai_plan: Json | null
+          confidence: number | null
+          created_at: string
+          detected_intent: string | null
+          final_response: string | null
+          id: string
+          language: string | null
+          mode: string | null
+          tools_executed: Json | null
+          user_input: string
+        }
+        Insert: {
+          ai_plan?: Json | null
+          confidence?: number | null
+          created_at?: string
+          detected_intent?: string | null
+          final_response?: string | null
+          id?: string
+          language?: string | null
+          mode?: string | null
+          tools_executed?: Json | null
+          user_input: string
+        }
+        Update: {
+          ai_plan?: Json | null
+          confidence?: number | null
+          created_at?: string
+          detected_intent?: string | null
+          final_response?: string | null
+          id?: string
+          language?: string | null
+          mode?: string | null
+          tools_executed?: Json | null
+          user_input?: string
+        }
+        Relationships: []
+      }
+      call_logs: {
+        Row: {
+          ai_handled: boolean | null
+          call_type: string
+          caller_name: string | null
+          contact_id: string | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          is_spam: boolean | null
+          phone_number: string
+        }
+        Insert: {
+          ai_handled?: boolean | null
+          call_type: string
+          caller_name?: string | null
+          contact_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          is_spam?: boolean | null
+          phone_number: string
+        }
+        Update: {
+          ai_handled?: boolean | null
+          call_type?: string
+          caller_name?: string | null
+          contact_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          is_spam?: boolean | null
+          phone_number?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_logs_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contacts: {
+        Row: {
+          created_at: string
+          id: string
+          is_favorite: boolean | null
+          is_spam: boolean | null
+          is_verified: boolean | null
+          name: string
+          phone_number: string
+          source: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          is_spam?: boolean | null
+          is_verified?: boolean | null
+          name: string
+          phone_number: string
+          source?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_favorite?: boolean | null
+          is_spam?: boolean | null
+          is_verified?: boolean | null
+          name?: string
+          phone_number?: string
+          source?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      spam_database: {
+        Row: {
+          category: string | null
+          created_at: string
+          id: string
+          phone_number: string
+          report_count: number | null
+          spam_score: number | null
+          updated_at: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          phone_number: string
+          report_count?: number | null
+          spam_score?: number | null
+          updated_at?: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          id?: string
+          phone_number?: string
+          report_count?: number | null
+          spam_score?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      voice_messages: {
+        Row: {
+          audio_url: string | null
+          call_log_id: string | null
+          created_at: string
+          duration_seconds: number | null
+          id: string
+          phone_number: string
+          summary: string | null
+          transcript: string | null
+        }
+        Insert: {
+          audio_url?: string | null
+          call_log_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          phone_number: string
+          summary?: string | null
+          transcript?: string | null
+        }
+        Update: {
+          audio_url?: string | null
+          call_log_id?: string | null
+          created_at?: string
+          duration_seconds?: number | null
+          id?: string
+          phone_number?: string
+          summary?: string | null
+          transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voice_messages_call_log_id_fkey"
+            columns: ["call_log_id"]
+            isOneToOne: false
+            referencedRelation: "call_logs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
